@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class EvolustionStrategy:
+class EvolutionStrategy:
     def __init__(self, group_size, sigma, max_iter, learning_rate):
         self.group_size = group_size
         self.sigma = sigma
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         res = ((target.T - pred) ** 2).mean(axis=-1)
         return res
 
-    es = EvolustionStrategy(20, 1e-3, max_iter=100, learning_rate=.1)
+    es = EvolutionStrategy(20, 1e-3, max_iter=100, learning_rate=.1)
     es.setup(
         fitness_calculation=fitness,
         initialization=lambda: np.random.random((1, 11))
