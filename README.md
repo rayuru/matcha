@@ -2,4 +2,4 @@
 ## heuristic
 #### ParticularSwarmOptimization
 #### SimulatedAnnealing
-#### AntColonyOptimization [WIP]
+#### AntColonyOptimization
