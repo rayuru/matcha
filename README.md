@@ -1,5 +1,6 @@
 # matcha
-## heuristic
-#### ParticularSwarmOptimization
-#### SimulatedAnnealing
-#### AntColonyOptimization
+## heuristic algorithm
+- ParticularSwarmOptimization
+- SimulatedAnnealing
+- AntColonyOptimization
+- EvolutionStrategy
