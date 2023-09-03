@@ -50,6 +50,42 @@ class EvolutionStrategy:
         return self
 
 
+class GaussianProcessEvolutionStrategy:
+    def __init__(self, mu, la, max_iter):
+        self.max_iter = max_iter
+        self.mu = mu
+        self.la = la
+
+        self.fitness_calculation = None
+        self.mean_initialization = None
+        self.variance_initialization = None
+
+        self.mean = None
+        self.variance = None
+
+    def setup(self, fitness_calculation, mean_initialization, variance_initialization):
+        self.fitness_calculation = fitness_calculation
+        self.mean_initialization = mean_initialization
+        self.variance_initialization = variance_initialization
+
+    def optimize(self):
+        mean = self.mean_initialization()
+        variance = self.variance_initialization()
+        n_iter = 0
+
+        while n_iter < self.max_iter:
+            group = np.random.multivariate_normal(mean, np.diag(variance), size=self.mu)
+
+            fitness = np.array([self.fitness_calculation(i) for i in group])
+            elite = group[np.argsort(fitness)[: self.la]]
+            mean = elite.mean(axis=0)
+            variance = np.var(elite, axis=0)
+            n_iter += 1
+        self.mean = mean
+        self.variance = variance
+        return self
+
+
 class CovarianceMatrixAdaptionEvolutionStrategy:
     ...
 
@@ -68,11 +104,14 @@ if __name__ == "__main__":
         res = ((target.T - pred) ** 2).mean()
         return res
 
-    es = EvolutionStrategy(20, 1e-3, max_iter=100, learning_rate=.1)
+    es = GaussianProcessEvolutionStrategy(1000, 30, max_iter=100)
     es.setup(
         fitness_calculation=rmse,
-        initialization=lambda: np.random.random((1, 11))
+        mean_initialization=lambda: np.random.random(11),
+        variance_initialization=lambda: np.random.random(11)
     )
     es.optimize()
-    print(es.generation, es.fitness)
+    print(es.mean)
     print(weight, bias)
+
+    print(es.variance)
