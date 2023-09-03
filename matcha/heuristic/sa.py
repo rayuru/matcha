@@ -34,6 +34,7 @@ class SimulatedAnnealing:
             update_flag = np.random.choice([0, 1], p=[probability, 1 - probability])
 
             if delta_fitness < 0 and update_flag == 0:
+                n_iter += 1
                 continue
             individual_fitness = candidate_fitness
             self.individual = candidate
@@ -45,3 +46,29 @@ class SimulatedAnnealing:
             n_iter += 1
 
         return self
+
+
+if __name__ == "__main__":
+    N_SAMPLE = 100
+    N_FEATURE = 10
+    data = np.random.normal(size=(N_SAMPLE, N_FEATURE))
+    w = np.random.normal(size=(N_FEATURE))
+    b = np.random.normal(size=1)
+    target = data @ w + b
+
+
+    def rmse(weights):
+        w = weights[:N_FEATURE]
+        b = weights[N_FEATURE:]
+        predict = data @ w + b
+        return -np.mean((target - predict) ** 2)
+
+
+    sa = SimulatedAnnealing(2, 500)
+    sa.setup(
+        fitness_calculation=rmse,
+        initialization=lambda: np.random.random((11))
+    )
+    sa.optimize()
+    print(sa.best_individual, sa.best_fitness)
+    print(w, b)

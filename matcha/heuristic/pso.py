@@ -77,7 +77,7 @@ class ParticularSwarmOptimization:
             self.curr_group_position, self.best_group_position)
 
     def _update_curr_group_fitness(self):
-        self.curr_group_fitness = self.fitness_calculation(self.curr_group_position)
+        self.curr_group_fitness = np.array([self.fitness_calculation(i) for i in self.curr_group_position])[..., np.newaxis]
 
     def _update_best_group_fitness(self):
         self.best_group_fitness = np.where(
@@ -107,3 +107,28 @@ class ParticularSwarmOptimization:
             self.n_iter += 1
 
         return self
+
+
+if __name__ == "__main__":
+    N_SAMPLE = 100
+    N_FEATURE = 10
+    data = np.random.normal(size=(N_SAMPLE, N_FEATURE))
+    w = np.random.normal(size=(N_FEATURE))
+    b = np.random.normal(size=1)
+    target = data @ w + b
+
+    def rmse(weights):
+        w = weights[:N_FEATURE]
+        b = weights[N_FEATURE:]
+        predict = data @ w + b
+        return -np.mean((target - predict) ** 2)
+
+    pso = ParticularSwarmOptimization(100, 1, 1, 1, 100)
+    pso.setup(
+        fitness_calculation=rmse,
+        position_initialization=lambda: np.random.random((1, 11)),
+        velocity_initialization=lambda: np.random.random((1, 11))
+    )
+    pso.optimize()
+    print(pso.best_position, pso.best_fitness)
+    print(w, b)
