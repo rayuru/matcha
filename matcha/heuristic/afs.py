@@ -16,13 +16,17 @@ class Fish:
         self.fitness = self.scorer(self.position)
 
     def __sub__(self, other):
+        """
+        distance calculation using "-"
+        :param other:
+        :return:
+        """
         return np.sqrt(np.square(self.position - other.position).mean())
 
     def get_visible_swarm(self, swarm):
-        distances = [self - fish for fish in swarm]
         visible_swarm = []
-        for d, fish in zip(distances, swarm):
-            if 0 < d < self.visual:
+        for fish in swarm:
+            if 0 < self - fish < self.visual:
                 visible_swarm.append(fish)
         return visible_swarm
 
@@ -37,24 +41,18 @@ class Fish:
         return position
 
     def _prey(self, visible_swarm):
-        if not visible_swarm:
-            return
         for _ in range(self.retry):
             candidate = random.choice(visible_swarm)
             if candidate.fitness > self.fitness:
                 return self._move(candidate.position)
 
     def _swarm(self, visible_swarm):
-        if not visible_swarm:
-            return
         if np.mean([fish.fitness for fish in visible_swarm]) < self.fitness:
             return
         visible_center = np.mean([fish.position for fish in visible_swarm], axis=0)
         return self._move(visible_center)
 
     def _follow(self, visible_swarm, swarm):
-        if not visible_swarm:
-            return
         best_fish = max(visible_swarm, key=lambda x: x.fitness)
         best_fish_visible_swarm = best_fish.get_visible_swarm(swarm)
         if not best_fish_visible_swarm:
@@ -71,15 +69,14 @@ class Fish:
     def step(self, swarm, speed):
         self.speed = speed
         visible_swarm = self.get_visible_swarm(swarm)
-        next_position = max([
-            self._prey(visible_swarm),
-            self._swarm(visible_swarm),
-            self._follow(visible_swarm, swarm)
-        ], key=lambda x: self.scorer(x) if x is not None else -np.inf)
-        if next_position is None:
-            self.position = self._random_move()
+        if visible_swarm:
+            self.position = max([
+                self._prey(visible_swarm),
+                self._swarm(visible_swarm),
+                self._follow(visible_swarm, swarm)
+            ], key=lambda x: self.scorer(x) if x is not None else -np.inf)
         else:
-            self.position = next_position
+            self.position = self._random_move()
         self.fitness = self.scorer(self.position)
 
 
