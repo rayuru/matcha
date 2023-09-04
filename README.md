@@ -4,3 +4,5 @@
 - SimulatedAnnealing
 - AntColonyOptimization
 - EvolutionStrategy
+- GaussianProcessEvolutionStrategy
+- ArtificialFishSwarm
