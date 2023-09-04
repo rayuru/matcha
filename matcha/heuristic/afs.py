@@ -4,16 +4,15 @@ from copy import deepcopy
 
 
 class Fish:
-    def __init__(self, scorer, init_p, init_d, init_s, visual, retry):
+    def __init__(self, scorer, init_p, init_d, visual, retry):
         self.scorer = scorer
         self.init_p = init_p
         self.init_d = init_d
-        self.init_s = init_s
         self.visual = visual
         self.retry = retry
 
         self.position = self.init_p()
-        self.speed = self.init_s()
+        self.speed = None
         self.fitness = self.scorer(self.position)
 
     def __sub__(self, other):
@@ -69,7 +68,8 @@ class Fish:
     def _random_move(self):
         return self._move(direction=self.init_d())
 
-    def step(self, swarm):
+    def step(self, swarm, speed):
+        self.speed = speed
         visible_swarm = self.get_visible_swarm(swarm)
         next_position = max([
             self._prey(visible_swarm),
@@ -81,12 +81,10 @@ class Fish:
         else:
             self.position = next_position
         self.fitness = self.scorer(self.position)
-        self.speed = self.init_s()
 
 
 class ArtificialFishSwarm:
-    def __init__(self, speed, visual, retry, swarm_size, max_iter):
-        self.speed = speed
+    def __init__(self, visual, retry, swarm_size, max_iter):
         self.visual = visual
         self.swarm_size = swarm_size
         self.retry = retry
@@ -112,30 +110,33 @@ class ArtificialFishSwarm:
         self.speed_initialization = speed_initialization
 
     def optimize(self):
-        swarm = []
-        for _ in range(self.swarm_size):
-            fish = Fish(
-                scorer=self.fitness_calculation,
-                init_p=self.position_initialization,
-                init_d=self.direction_initialization,
-                init_s=self.speed_initialization,
-                visual=self.visual,
-                retry=self.retry
-            )
-            swarm.append(fish)
+        swarm = self._initialize_swarm()
 
         n_iter = 0
         while n_iter < self.max_iter:
             new_swarm = deepcopy(swarm)
 
             for fish in new_swarm:
-                fish.step(swarm)
+                fish.step(swarm, self.speed_initialization() * (1 - n_iter / self.max_iter))
                 if self.best_fish is None or self.best_fish.fitness < fish.fitness:
                     self.best_fish = deepcopy(fish)
             if n_iter % 10 == 0: print(n_iter, max(fish.fitness for fish in new_swarm))
             swarm = new_swarm
             n_iter += 1
         return self
+
+    def _initialize_swarm(self):
+        swarm = []
+        for _ in range(self.swarm_size):
+            fish = Fish(
+                scorer=self.fitness_calculation,
+                init_p=self.position_initialization,
+                init_d=self.direction_initialization,
+                visual=self.visual,
+                retry=self.retry
+            )
+            swarm.append(fish)
+        return swarm
 
 
 if __name__ == "__main__":
@@ -153,12 +154,12 @@ if __name__ == "__main__":
         predict = data @ w + b
         return -np.mean((target - predict) ** 2)
 
-    afs = ArtificialFishSwarm(.1, 1, 10, 100, 200)
+    afs = ArtificialFishSwarm(1, 10, 100, 200)
     afs.setup(
         fitness_calculation=rmse,
         position_initialization=lambda: np.random.normal(size=11),
         direction_initialization=lambda: np.random.normal(size=11),
-        speed_initialization=lambda: np.random.uniform(.1, .2)
+        speed_initialization=lambda: 1
     )
     afs.optimize()
     print(afs.best_fish.position, afs.best_fish.fitness)
