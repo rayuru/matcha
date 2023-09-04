@@ -25,6 +25,9 @@ class Ant:
         self.mask[self.current_spot] -= 1e4
 
     def _choose_next_spot(self):
+        # use pheromone as logits for probability calculation
+        # use mask to push down logits and probability
+        # use safe softmax to avoid overflow
         logits = self.pheromone[self.current_spot, :] + self.mask
         safe_exp = np.exp(logits - logits.max())
         prob = safe_exp / safe_exp.sum()
@@ -60,15 +63,23 @@ class AntColonyOptimization:
     def optimize(self, start_spot=0):
         n_iter = 0
         while n_iter < self.max_iter:
+            # initialize pheromone matrix for current iteration
             temp_pheromone = np.zeros_like(self.pheromone)
             for ant in self.ant_group:
+                # set historical pheromone matrix for current ant
                 ant.set_pheromone(self.pheromone)
                 path = ant.search_path(start_spot)
+
+                # update current pheromone matrix
                 for i, j in zip(path, path[1:]):
                     temp_pheromone[i, j] += 1 / ant.distance
+
+                # update best record
                 if ant.distance < self.best_distance:
                     self.best_distance = ant.distance
                     self.best_path = ant.path
             n_iter += 1
+
+            # decay historical pheromone and update with current pheromone
             self.pheromone = self.pheromone * self.decay + temp_pheromone
         return self
