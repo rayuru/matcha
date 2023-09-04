@@ -87,7 +87,7 @@ class GaussianProcessEvolutionStrategy:
 
 
 class CovarianceMatrixAdaptionEvolutionStrategy:
-    ...
+    raise NotImplementedError()
 
 
 if __name__ == "__main__":
