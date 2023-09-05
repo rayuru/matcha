@@ -47,19 +47,26 @@ class Fish:
                 return self._move(candidate.position)
 
     def _swarm(self, visible_swarm):
+        # if average fitness of visible swarm is not better than current fitness, do not take this action
         if np.mean([fish.fitness for fish in visible_swarm]) < self.fitness:
             return
         visible_center = np.mean([fish.position for fish in visible_swarm], axis=0)
         return self._move(visible_center)
 
     def _follow(self, visible_swarm, swarm):
+        # find out the best fish in vision
         best_fish = max(visible_swarm, key=lambda x: x.fitness)
+        # get the vision of this fish
         best_fish_visible_swarm = best_fish.get_visible_swarm(swarm)
+
+        # if no fish in vision of this best fish, do not take this action
         if not best_fish_visible_swarm:
             return
+        # if average fitness of the visible swarm is not better than current fitness, do not take this action
         visible_fitness = np.mean([fish.fitness for fish in best_fish_visible_swarm])
         if visible_fitness < self.fitness:
             return
+
         visible_center = np.mean([fish.position for fish in best_fish_visible_swarm], axis=0)
         return self._move(visible_center)
 
@@ -69,15 +76,17 @@ class Fish:
     def step(self, swarm, speed):
         self.speed = speed
         visible_swarm = self.get_visible_swarm(swarm)
+        new_position = None
         if visible_swarm:
-            self.position = max([
+            new_position = max([
                 self._prey(visible_swarm),
                 self._swarm(visible_swarm),
                 self._follow(visible_swarm, swarm)
             ], key=lambda x: self.scorer(x) if x is not None else -np.inf)
-        else:
-            self.position = self._random_move()
-        self.fitness = self.scorer(self.position)
+        if new_position is None:
+            new_position = self._random_move()
+        self.position = new_position
+        self.fitness = self.scorer(new_position)
 
 
 class ArtificialFishSwarm:
