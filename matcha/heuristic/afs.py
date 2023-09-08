@@ -76,17 +76,13 @@ class Fish:
     def step(self, swarm, speed):
         self.speed = speed
         visible_swarm = self.get_visible_swarm(swarm)
-        new_position = None
-        if visible_swarm:
-            new_position = max([
-                self._prey(visible_swarm),
-                self._swarm(visible_swarm),
-                self._follow(visible_swarm, swarm)
-            ], key=lambda x: self.scorer(x) if x is not None else -np.inf)
-        if new_position is None:
-            new_position = self._random_move()
-        self.position = new_position
-        self.fitness = self.scorer(new_position)
+        self.position = max([
+            self._prey(visible_swarm) if visible_swarm else None,
+            self._swarm(visible_swarm) if visible_swarm else None,
+            self._follow(visible_swarm, swarm) if visible_swarm else None,
+            self._random_move()
+        ], key=lambda x: self.scorer(x) if x is not None else -np.inf)
+        self.fitness = self.scorer(self.position)
 
 
 class ArtificialFishSwarm:
@@ -121,9 +117,9 @@ class ArtificialFishSwarm:
         n_iter = 0
         while n_iter < self.max_iter:
             new_swarm = deepcopy(swarm)
-
+            speed = self.speed_initialization() * (1 - n_iter / self.max_iter)
             for fish in new_swarm:
-                fish.step(swarm, self.speed_initialization() * (1 - n_iter / self.max_iter))
+                fish.step(swarm, speed)
                 if self.best_fish is None or self.best_fish.fitness < fish.fitness:
                     self.best_fish = deepcopy(fish)
             if n_iter % 10 == 0: print(n_iter, max(fish.fitness for fish in new_swarm))
@@ -160,7 +156,7 @@ if __name__ == "__main__":
         predict = data @ w + b
         return -np.mean((target - predict) ** 2)
 
-    afs = ArtificialFishSwarm(1, 10, 100, 200)
+    afs = ArtificialFishSwarm(1, 10, 100, 100)
     afs.setup(
         fitness_calculation=rmse,
         position_initialization=lambda: np.random.normal(size=11),
